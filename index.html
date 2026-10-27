@@ -1,0 +1,770 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1b2a49">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Zurrik Speurtocht">
+<title>Zurrikse Speurtocht – Soerendonk</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎃</text></svg>">
+<style>
+  :root{
+    --bg:#f4f1ea; --card:#ffffff; --ink:#1d2433; --muted:#6a7183; --line:#e3ded2;
+    --navy:#1b2a49; --orange:#f08a24; --orange-d:#c96d0f; --green:#2e9e5b; --yellow:#e0a800;
+    --red:#d64545; --blue:#2b6cb0; --soft:#faf7f0; --shadow:0 1px 3px rgba(20,25,40,.08),0 4px 14px rgba(20,25,40,.06);
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#12161f; --card:#1c2230; --ink:#eef0f5; --muted:#9aa3b8; --line:#2c3447;
+      --navy:#0e1424; --soft:#232b3d; --shadow:none;
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);color:var(--ink);
+    font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    padding-bottom:calc(76px + env(safe-area-inset-bottom));
+  }
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  [hidden]{display:none!important}
+
+  /* Header */
+  #hdr{
+    position:sticky;top:0;z-index:20;background:var(--navy);color:#fff;
+    padding:calc(10px + env(safe-area-inset-top)) 16px 10px;
+    box-shadow:0 2px 10px rgba(0,0,0,.25);
+  }
+  .hdr-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .team{font-weight:700;font-size:17px;display:flex;align-items:center;gap:8px;min-width:0}
+  .team span.nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .team .badge{background:var(--orange);color:#fff;border-radius:999px;font-size:12px;padding:2px 9px;flex:none}
+  .icon-btn{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:10px;width:36px;height:36px;flex:none}
+  .score-wrap{text-align:right;line-height:1}
+  .score{font-size:34px;font-weight:800;letter-spacing:-1px}
+  .score small{font-size:13px;font-weight:600;opacity:.75;letter-spacing:0;margin-left:3px}
+  .timer{margin-top:6px;font-size:13.5px;font-weight:600;opacity:.95}
+  .timer.late{color:#ffb4b4}
+  .timer.ok{color:#a8f0c4}
+  .bar{height:6px;background:rgba(255,255,255,.18);border-radius:99px;margin-top:8px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:var(--orange);border-radius:99px;transition:width .3s}
+
+  main{max-width:720px;margin:0 auto;padding:14px 14px 20px}
+  h2{margin:4px 0 10px;font-size:20px}
+  h3{margin:0 0 8px;font-size:16px}
+  .card{background:var(--card);border-radius:16px;padding:14px 16px;margin:0 0 14px;box-shadow:var(--shadow);border:1px solid var(--line)}
+  .muted{color:var(--muted)}
+  .small{font-size:13.5px}
+
+  /* Filters */
+  .chips{display:flex;gap:8px;margin:0 0 14px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 14px;font-weight:600;font-size:14px}
+  .chip.on{background:var(--navy);color:#fff;border-color:var(--navy)}
+  @media (prefers-color-scheme: dark){ .chip.on{background:var(--orange);border-color:var(--orange)} }
+
+  .cat{margin:18px 0 8px;display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+  .cat h2{margin:0;font-size:18px}
+  .cat span{font-size:13px;color:var(--muted)}
+
+  /* Task */
+  .task{background:var(--card);border:1px solid var(--line);border-radius:14px;margin:0 0 10px;box-shadow:var(--shadow);overflow:hidden}
+  .task.done{border-color:var(--green);background:linear-gradient(0deg,rgba(46,158,91,.07),rgba(46,158,91,.07)),var(--card)}
+  .task .row{display:flex;gap:12px;align-items:flex-start;padding:12px 14px;cursor:pointer}
+  .task input[type=checkbox]{width:28px;height:28px;flex:none;margin:1px 0 0;accent-color:var(--green)}
+  .tbody{flex:1;min-width:0}
+  .ttitle{font-weight:600}
+  .ttitle .num{color:var(--orange-d);font-weight:800;margin-right:4px}
+  .tmeta{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px;align-items:center}
+  .pill{font-size:12.5px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--soft);border:1px solid var(--line)}
+  .pill.pts{background:#fff2e0;border-color:#f6d7aa;color:#8a4b00}
+  @media (prefers-color-scheme: dark){ .pill.pts{background:#3b2c18;border-color:#5b4122;color:#ffc680} }
+  .pill.ok{background:#e3f6ea;border-color:#b6e3c6;color:#17673a}
+  @media (prefers-color-scheme: dark){ .pill.ok{background:#173a28;border-color:#245a3c;color:#8fe0b3} }
+  .tip{font-size:13px;color:var(--muted);margin-top:5px}
+  .extras{padding:0 14px 12px 54px;display:grid;gap:8px}
+  .extras.nopad{padding-left:14px}
+  .who{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:9px 11px;font-size:14.5px}
+  .who:focus,.in:focus{outline:2px solid var(--orange);border-color:var(--orange)}
+  .warn{font-size:13px;font-weight:600;color:var(--red);background:rgba(214,69,69,.1);border-radius:8px;padding:6px 9px}
+  .bonus{display:flex;gap:10px;align-items:center;font-size:14.5px;font-weight:600}
+  .bonus input{width:22px;height:22px;accent-color:var(--orange)}
+  .jury{font-size:14px;font-weight:600;border-radius:8px;padding:6px 9px;background:var(--soft)}
+  .jury.win{background:#fff3c4;color:#6b4e00}
+  .jury.lose{background:#e8edf4;color:#3c4a63}
+  .jury.pend{background:#eef2ff;color:#3a4ba0}
+
+  .stepper{display:flex;align-items:center;gap:12px;padding:0 14px 14px 14px}
+  .stepper button{width:48px;height:48px;border-radius:12px;border:1px solid var(--line);background:var(--soft);font-size:26px;font-weight:700}
+  .stepper button:active{background:var(--orange);color:#fff}
+  .stepper .cnt{font-size:28px;font-weight:800;min-width:38px;text-align:center}
+  .stepper .lbl{font-size:13.5px;color:var(--muted);line-height:1.3}
+  .head-counter{padding:12px 14px 4px;display:flex;gap:12px;align-items:flex-start}
+  .head-counter .emoji{font-size:26px;line-height:1.1}
+
+  /* Buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:var(--card);border-radius:12px;padding:12px 16px;font-weight:700;min-height:46px}
+  .btn.primary{background:var(--orange);border-color:var(--orange);color:#fff}
+  .btn.primary:active{background:var(--orange-d)}
+  .btn.green{background:var(--green);border-color:var(--green);color:#fff}
+  .btn.danger{border-color:var(--red);color:var(--red)}
+  .btn.block{display:flex;width:100%}
+  .btns{display:grid;gap:10px;margin-top:12px}
+  .btns.two{grid-template-columns:1fr 1fr}
+
+  .in{width:100%;border:1px solid var(--line);background:var(--soft);border-radius:10px;padding:11px 12px}
+  textarea.in{min-height:84px;resize:vertical}
+  label.lab{display:block;font-weight:700;font-size:14px;margin:12px 0 5px}
+
+  /* Table */
+  table{width:100%;border-collapse:collapse;font-size:15px}
+  td,th{padding:8px 4px;border-bottom:1px solid var(--line);text-align:left}
+  th{font-size:12.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  td.r,th.r{text-align:right;font-variant-numeric:tabular-nums}
+  tr.total td{font-weight:800;font-size:18px;border-bottom:0;padding-top:12px}
+  .neg{color:var(--red)}
+
+  ol.rules{padding-left:20px;margin:0}
+  ol.rules li{margin:0 0 10px}
+  ul.plain{padding-left:20px;margin:6px 0 0}
+
+  /* Setup */
+  .setup{margin-top:8vh;text-align:center}
+  .setup h1{margin:0 0 4px;font-size:26px}
+  .team-pick{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:18px 0}
+  .team-pick button{padding:22px 10px;border-radius:16px;border:2px solid var(--line);background:var(--soft);font-size:20px;font-weight:800}
+  .team-pick button.sel{border-color:var(--orange);background:#fff2e0;color:#8a4b00}
+  @media (prefers-color-scheme: dark){ .team-pick button.sel{background:#3b2c18;color:#ffc680} }
+
+  /* Nav */
+  #nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);
+    display:grid;grid-template-columns:repeat(4,1fr);padding-bottom:env(safe-area-inset-bottom);
+  }
+  #nav button{border:0;background:none;padding:9px 2px 8px;font-size:12px;font-weight:700;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px}
+  #nav button .e{font-size:21px;line-height:1}
+  #nav button.on{color:var(--orange-d)}
+  @media (prefers-color-scheme: dark){ #nav button.on{color:var(--orange)} }
+
+  #toast{
+    position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);
+    background:#111;color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;font-weight:600;opacity:0;pointer-events:none;
+    transition:all .25s;z-index:50;max-width:90vw;text-align:center;
+  }
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .rank{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:var(--soft);margin:8px 0;font-weight:700}
+  .rank.first{background:#fff3c4;color:#6b4e00}
+  .rank .p{margin-left:auto;font-size:20px;font-weight:800}
+</style>
+</head>
+<body>
+
+<header id="hdr" hidden></header>
+<main id="app"></main>
+<nav id="nav" hidden aria-label="Navigatie">
+  <button type="button" data-act="tab" data-tab="tasks"><span class="e">📋</span>Opdrachten</button>
+  <button type="button" data-act="tab" data-tab="score"><span class="e">🏆</span>Stand</button>
+  <button type="button" data-act="tab" data-tab="rules"><span class="e">📜</span>Regels</button>
+  <button type="button" data-act="tab" data-tab="leader"><span class="e">🎩</span>Spelleider</button>
+</nav>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ============================================================
+   INSTELLINGEN – pas deze aan voordat je de app deelt
+   ============================================================ */
+var CONFIG = {
+  PIN: '9876',                 // pincode voor de spelleidersmodus
+  EINDTIJD: '2026-10-30T23:59',// vaste eindtijd voor alle telefoons (leeg = later instellen)
+  PENALTY_POINTS: 2,           // strafpunten ...
+  PENALTY_MINUTES: 5,          // ... per begonnen blok van zoveel minuten te laat
+  STORAGE_KEY: 'zurrik-speurtocht-v1'
+};
+
+/* ============================================================
+   OPDRACHTEN
+   type: check | bonus | counter | comp
+   ============================================================ */
+var CATS = [
+  {id:'easy',  label:'🟢 Makkelijk',            sub:'2–3 punten'},
+  {id:'mid',   label:'🟡 Middel',               sub:'4–5 punten'},
+  {id:'comp',  label:'🏁 Wedstrijdopdrachten',  sub:'jury beslist'},
+  {id:'heavy', label:'🔴 Zware jongens & bonus',sub:'veel punten'}
+];
+
+var TASKS = [
+  // Makkelijk
+  {id:4,  cat:'easy', type:'check', pts:2, text:'Op de foto met het wapen van Soerendonk', ph:'Waar staat het wapen?'},
+  {id:5,  cat:'easy', type:'check', pts:2, text:'Ga met een Goor-bordje op de foto', ph:'Waar?'},
+  {id:9,  cat:'easy', type:'check', pts:2, text:'Op de foto met een pompoen', ph:'Bij wie / waar?'},
+  {id:24, cat:'easy', type:'check', pts:2, text:'Maak een foto met een tuinkabouter', ph:'Welk huis / adres?'},
+  {id:26, cat:'easy', type:'check', pts:2, text:'Maak een foto met de Brabantse vlag', ph:'Welk huis / adres? (ander huis dan de kabouter)'},
+  {id:16, cat:'easy', type:'check', pts:2, text:'Maak een foto waarop iedereen tegelijk los is van de grond', ph:'Waar?'},
+  {id:3,  cat:'easy', type:'check', pts:3, text:'Zorg dat je het geluid van de kerkklokken vastlegt op video', ph:'Notitie'},
+  {id:6,  cat:'easy', type:'check', pts:3, text:'Ga op de foto met Mr. Pieper', ph:'Notitie'},
+  {id:10, cat:'easy', type:'bonus', pts:3, bonusPts:2, bonusLabel:'Erop gezeten (+2 bonus)', text:'Maak een foto met een tractor', ph:'Van wie is de tractor?'},
+  {id:15, cat:'easy', type:'check', pts:3, text:'Maak een menselijke piramide voor een herkenbare plek', ph:'Welke plek?'},
+  {id:17, cat:'easy', type:'check', pts:3, text:'Maak een foto met iemand die dezelfde voornaam heeft als iemand uit jullie team', ph:'Naam van de persoon'},
+
+  // Middel
+  {id:20, cat:'mid', type:'check', pts:4, text:'Krijg toestemming om achter een bar een foto te maken', ph:'Welke bar / café?'},
+  {id:12, cat:'mid', type:'check', pts:4, text:'Vind iemand die iemand uit onze familie blijkt te kennen', ph:'Naam van de persoon + wie kent die?'},
+  {id:14, cat:'mid', type:'check', pts:4, text:'Krijg een handtekening van iemand die volgens zichzelf “bekend is in Soerendonk”', ph:'Naam van de persoon'},
+  {id:21, cat:'mid', type:'check', pts:4, text:'Laat iemand uit het dorp op video de zin afmaken: “Je bent pas een echte Zurrikse als je…”', ph:'Naam van de persoon'},
+  {id:22, cat:'mid', type:'check', pts:4, text:'Zoek iemand die al meer dan 50 jaar in Soerendonk woont', ph:'Naam van de persoon'},
+  {id:23, cat:'mid', type:'check', pts:4, text:'Zoek iemand die in Soerendonk geboren is en ga samen op de foto', tip:'Moet iemand anders zijn dan bij #22.', ph:'Naam van de persoon'},
+  {id:11, cat:'mid', type:'check', pts:5, text:'Laat een onbekende jullie teamlied kiezen en zing 20 seconden mee', ph:'Naam van de persoon'},
+  {id:13, cat:'mid', type:'check', pts:5, text:'Maak een foto met drie generaties uit één familie', ph:'Welke familie / adres?'},
+  {id:19, cat:'mid', type:'check', pts:5, text:'Krijg iemand zover dat die een zelfverzonnen Soerendonk-yell met jullie doet', ph:'Naam van de persoon'},
+
+  // Wedstrijd
+  {id:1,  cat:'comp', type:'comp', win:5, lose:2, text:'Zoek het oudste jaartal dat je ergens op een gebouw kunt vinden', tip:'Oudste jaartal wint. Noteer jaartal én adres.', ph:'Jaartal + adres'},
+  {id:18, cat:'comp', type:'comp', win:6, lose:2, text:'Maak een reclamespot van 15 sec. voor Soerendonk als vakantiebestemming', tip:'Beste filmpje wint. Telt ook als tiebreaker.', ph:'Notitie'},
+  {id:25, cat:'comp', type:'comp', win:4, lose:1, text:'Maak een foto met het lelijkste voortuinornament dat je kunt vinden', tip:'Lelijkste wint.', ph:'Welk huis / adres?'},
+
+  // Zwaar
+  {id:2,  cat:'heavy', type:'check', pts:8, text:'Zorg dat je wordt uitgenodigd voor een biertje bij iemand thuis', tip:'Kies slim: dit huis en deze persoon kun je niet nog eens gebruiken.', ph:'Naam + adres'},
+  {id:7,  cat:'heavy', type:'counter', max:10, emoji:'🥃', text:'Fles salmari: deel zoveel mogelijk shotjes uit', tip:'1 punt per shotje, max. 10. Max. 1 shotje per persoon, alleen 18+, teamgenoten tellen niet.'},
+  {id:8,  cat:'heavy', type:'check', pts:10, text:'Keetfeest (bonusvraag)', ph:'Notitie'}
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var memStore = null;
+function load(){
+  var raw = null;
+  try{ raw = localStorage.getItem(CONFIG.STORAGE_KEY); }catch(e){ raw = memStore; }
+  var base = {teamId:null, teamName:'', tasks:{}, endTime:CONFIG.EINDTIJD||'', finishedAt:null, adjust:0, adjustNote:'', filter:'all', tab:'tasks'};
+  if(!raw) return base;
+  try{ var s = JSON.parse(raw); for(var k in base){ if(!(k in s)) s[k]=base[k]; } return s; }catch(e){ return base; }
+}
+var state = load();
+var unlocked = false;
+var setupTeam = null;
+
+function save(){
+  var s = JSON.stringify(state);
+  try{ localStorage.setItem(CONFIG.STORAGE_KEY, s); }catch(e){ memStore = s; }
+}
+function getT(id){
+  if(!state.tasks[id]) state.tasks[id] = {done:false, who:'', ts:null, bonus:false, count:0, jury:'pending'};
+  return state.tasks[id];
+}
+
+/* ============================================================
+   HULPFUNCTIES
+   ============================================================ */
+function $(s,r){ return (r||document).querySelector(s); }
+function $$(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function pad(n){ return (n<10?'0':'')+n; }
+function hhmm(ts){ var d=new Date(ts); return pad(d.getHours())+':'+pad(d.getMinutes()); }
+function norm(s){ return String(s||'').toLowerCase().replace(/\s+/g,' ').trim(); }
+var toastTimer;
+function toast(msg){
+  var el=$('#toast'); el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){el.classList.remove('show');},2400);
+}
+function findTask(id){ for(var i=0;i<TASKS.length;i++){ if(TASKS[i].id===id) return TASKS[i]; } return null; }
+
+function isDone(task){
+  var t=getT(task.id);
+  return task.type==='counter' ? t.count>0 : t.done;
+}
+function taskPoints(task){
+  var t=getT(task.id);
+  if(task.type==='counter') return Math.max(0,Math.min(task.max,t.count|0));
+  if(!t.done) return 0;
+  if(task.type==='comp'){ return t.jury==='win'?task.win:(t.jury==='lose'?task.lose:0); }
+  var p=task.pts;
+  if(task.type==='bonus' && t.bonus) p+=task.bonusPts;
+  return p;
+}
+function maxPoints(task){
+  if(task.type==='counter') return task.max;
+  if(task.type==='comp') return task.win;
+  if(task.type==='bonus') return task.pts+task.bonusPts;
+  return task.pts;
+}
+function pendingJuryIds(){
+  return TASKS.filter(function(t){ return t.type==='comp' && getT(t.id).done && getT(t.id).jury==='pending'; }).map(function(t){return t.id;});
+}
+function rawTotal(){ return TASKS.reduce(function(a,t){return a+taskPoints(t);},0); }
+function maxTotal(){ return TASKS.reduce(function(a,t){return a+maxPoints(t);},0); }
+function doneCount(){ return TASKS.filter(isDone).length; }
+
+function penalty(){
+  if(!state.endTime) return {late:0, pts:0};
+  var end = new Date(state.endTime).getTime();
+  if(isNaN(end)) return {late:0, pts:0};
+  var ref = state.finishedAt || Date.now();
+  var late = (ref-end)/60000;
+  if(late<=0) return {late:0, pts:0};
+  return {late:late, pts: Math.ceil(late/CONFIG.PENALTY_MINUTES)*CONFIG.PENALTY_POINTS};
+}
+function total(){ return rawTotal() - penalty().pts + (Number(state.adjust)||0); }
+
+function fmtDur(ms){
+  var s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor((s%3600)/60), x=s%60;
+  return (h>0? h+':'+pad(m)+':'+pad(x) : m+':'+pad(x));
+}
+
+/* ============================================================
+   RENDER – HEADER
+   ============================================================ */
+function renderHeader(){
+  var h=$('#hdr');
+  h.hidden=false;
+  h.innerHTML =
+    '<div class="hdr-top">'+
+      '<div class="team"><span class="badge">Team '+esc(state.teamId)+'</span><span class="nm">'+esc(state.teamName)+'</span>'+
+      '<button type="button" class="icon-btn" data-act="rename" aria-label="Teamnaam wijzigen">✏️</button></div>'+
+      '<div class="score-wrap"><div class="score"><span id="hScore">0</span><small>pt</small></div></div>'+
+    '</div>'+
+    '<div class="timer" id="hTimer"></div>'+
+    '<div class="bar"><i id="hBar" style="width:0%"></i></div>';
+  updateHeader();
+}
+function updateHeader(){
+  var sc=$('#hScore'); if(!sc) return;
+  sc.textContent = total();
+  var bar=$('#hBar'); if(bar) bar.style.width = Math.round(doneCount()/TASKS.length*100)+'%';
+  updateTimer();
+}
+function updateTimer(){
+  var el=$('#hTimer'); if(!el) return;
+  var cls='timer', txt='';
+  if(!state.endTime){
+    txt='⏱️ Eindtijd nog niet ingesteld (spelleider)';
+  } else {
+    var end=new Date(state.endTime).getTime();
+    if(isNaN(end)){ txt='⏱️ Ongeldige eindtijd'; }
+    else if(state.finishedAt){
+      var p=penalty();
+      txt='✅ Teruggekomen om '+hhmm(state.finishedAt)+(p.pts>0?' · te laat: −'+p.pts+' pt':' · op tijd!');
+      cls+= p.pts>0?' late':' ok';
+    } else {
+      var diff=end-Date.now();
+      if(diff>0){ txt='⏳ Nog '+fmtDur(diff)+' tot '+hhmm(end); }
+      else { var pp=penalty(); txt='🚨 Te laat ('+fmtDur(-diff)+') · nu −'+pp.pts+' pt'; cls+=' late'; }
+    }
+  }
+  el.className=cls; el.textContent=txt;
+  var sc=$('#hScore'); if(sc) sc.textContent=total();
+}
+
+/* ============================================================
+   RENDER – OPDRACHTEN
+   ============================================================ */
+function taskCard(task){
+  var t=getT(task.id), done=isDone(task);
+  var pills='';
+  if(task.type==='comp') pills='<span class="pill pts">'+task.win+' pt winnaar · '+task.lose+' pt tweede</span>';
+  else if(task.type==='counter') pills='<span class="pill pts">1 pt per shotje · max '+task.max+'</span>';
+  else if(task.type==='bonus') pills='<span class="pill pts">'+task.pts+' pt (+'+task.bonusPts+' bonus)</span>';
+  else pills='<span class="pill pts">'+task.pts+' pt</span>';
+  if(done && task.type!=='counter') pills+='<span class="pill ok">✓ '+(t.ts?hhmm(t.ts):'gedaan')+'</span>';
+  if(task.type==='counter' && t.count>0) pills+='<span class="pill ok">+'+taskPoints(task)+' pt</span>';
+
+  var tip = task.tip?'<div class="tip">'+esc(task.tip)+'</div>':'';
+  var html='<article class="task'+(done?' done':'')+'" data-id="'+task.id+'">';
+
+  if(task.type==='counter'){
+    html+='<div class="head-counter"><div class="emoji">'+task.emoji+'</div><div class="tbody">'+
+      '<div class="ttitle"><span class="num">#'+task.id+'</span>'+esc(task.text)+'</div>'+
+      '<div class="tmeta">'+pills+'</div>'+tip+'</div></div>'+
+      '<div class="stepper">'+
+        '<button type="button" data-act="dec" data-id="'+task.id+'" aria-label="Eén shotje minder">−</button>'+
+        '<div class="cnt" aria-live="polite">'+t.count+'</div>'+
+        '<button type="button" data-act="inc" data-id="'+task.id+'" aria-label="Eén shotje meer">+</button>'+
+        '<div class="lbl">shotjes uitgedeeld'+(t.count>=task.max?'<br><b>Maximum bereikt!</b>':'')+'</div>'+
+      '</div>';
+  } else {
+    html+='<label class="row"><input type="checkbox" data-act="toggle" data-id="'+task.id+'"'+(t.done?' checked':'')+'>'+
+      '<div class="tbody"><div class="ttitle"><span class="num">#'+task.id+'</span>'+esc(task.text)+'</div>'+
+      '<div class="tmeta">'+pills+'</div>'+tip+'</div></label>';
+    if(t.done){
+      html+='<div class="extras">';
+      if(task.type==='bonus'){
+        html+='<label class="bonus"><input type="checkbox" data-act="bonus" data-id="'+task.id+'"'+(t.bonus?' checked':'')+'> '+esc(task.bonusLabel)+'</label>';
+      }
+      if(task.type==='comp'){
+        if(t.jury==='win') html+='<div class="jury win">🏆 Jury: gewonnen · +'+task.win+' pt</div>';
+        else if(t.jury==='lose') html+='<div class="jury lose">🥈 Jury: tweede · +'+task.lose+' pt</div>';
+        else html+='<div class="jury pend">⏳ Wacht op jury · tot '+task.win+' pt te verdienen</div>';
+      }
+      html+='<input class="who" type="text" data-act="who" data-id="'+task.id+'" maxlength="120" placeholder="'+esc(task.ph||'Notitie')+'" value="'+esc(t.who)+'" autocomplete="off">';
+      html+='<div class="warn" data-warn="'+task.id+'" hidden></div>';
+      html+='</div>';
+    }
+  }
+  html+='</article>';
+  return html;
+}
+
+function renderTasks(){
+  var f=state.filter;
+  var done=doneCount();
+  var html='<div class="chips" role="tablist">'+
+    ['all|Alle ('+TASKS.length+')','open|Nog te doen ('+(TASKS.length-done)+')','done|Gedaan ('+done+')'].map(function(x){
+      var p=x.split('|'); return '<button type="button" class="chip'+(f===p[0]?' on':'')+'" data-act="filter" data-f="'+p[0]+'">'+p[1]+'</button>';
+    }).join('')+'</div>';
+
+  var any=false;
+  CATS.forEach(function(c){
+    var list=TASKS.filter(function(t){
+      if(t.cat!==c.id) return false;
+      if(f==='open') return !isDone(t);
+      if(f==='done') return isDone(t);
+      return true;
+    });
+    if(!list.length) return;
+    any=true;
+    html+='<div class="cat"><h2>'+c.label+'</h2><span>'+c.sub+'</span></div>';
+    html+=list.map(taskCard).join('');
+  });
+  if(!any) html+='<div class="card muted">Niets te tonen in dit filter. '+(f==='open'?'🎉 Alles gedaan!':'')+'</div>';
+  return html;
+}
+
+/* ============================================================
+   RENDER – STAND
+   ============================================================ */
+function renderScore(){
+  var rows=CATS.map(function(c){
+    var list=TASKS.filter(function(t){return t.cat===c.id;});
+    var got=list.reduce(function(a,t){return a+taskPoints(t);},0);
+    var mx=list.reduce(function(a,t){return a+maxPoints(t);},0);
+    var n=list.filter(isDone).length;
+    return '<tr><td>'+c.label+'</td><td class="r">'+n+'/'+list.length+'</td><td class="r"><b>'+got+'</b> <span class="muted">/ '+mx+'</span></td></tr>';
+  }).join('');
+  var p=penalty();
+  var adj=Number(state.adjust)||0;
+  var pend=pendingJuryIds();
+
+  var html='<div class="card"><h2>🏆 Stand van '+esc(state.teamName)+'</h2>'+
+    '<table><thead><tr><th>Categorie</th><th class="r">Gedaan</th><th class="r">Punten</th></tr></thead><tbody>'+rows+
+      '<tr><td>Subtotaal</td><td class="r">'+doneCount()+'/'+TASKS.length+'</td><td class="r"><b>'+rawTotal()+'</b></td></tr>'+
+      (p.pts>0?'<tr><td class="neg">⏰ Te laat ('+Math.ceil(p.late)+' min)</td><td></td><td class="r neg">−'+p.pts+'</td></tr>':'')+
+      (adj!==0?'<tr><td>🎩 Correctie spelleider'+(state.adjustNote?' <span class="muted small">('+esc(state.adjustNote)+')</span>':'')+'</td><td></td><td class="r '+(adj<0?'neg':'')+'">'+(adj>0?'+':'')+adj+'</td></tr>':'')+
+      '<tr class="total"><td>Totaal</td><td></td><td class="r">'+total()+'</td></tr>'+
+    '</tbody></table>'+
+    (pend.length?'<p class="small muted">⏳ Nog op jury te wachten: '+pend.map(function(i){return '#'+i;}).join(', ')+'</p>':'')+
+    '<p class="small muted">Maximaal haalbaar: '+maxTotal()+' punten. Onderweg keuzes maken hoort erbij!</p></div>';
+
+  html+='<div class="card"><h3>🏁 Terugkomst</h3>';
+  if(state.finishedAt){
+    html+='<p>Jullie zijn teruggekomen om <b>'+hhmm(state.finishedAt)+'</b>. Jullie tijd staat vast.</p>';
+  } else {
+    html+='<p class="small muted">Druk op de knop zodra jullie terug zijn bij de spelleider. Daarna staat de tijd vast.</p>'+
+      '<button type="button" class="btn green block" data-act="finish">✅ Wij zijn terug!</button>';
+  }
+  html+='</div>';
+
+  html+='<div class="card"><h3>📤 Score delen met de spelleider</h3>'+
+    '<p class="small muted">Stuurt je score én een scorecode, zodat de spelleider de eindstand kan vergelijken.</p>'+
+    '<div class="btns two"><button type="button" class="btn primary" data-act="wa">WhatsApp</button>'+
+    '<button type="button" class="btn" data-act="copy">Kopieer</button></div></div>';
+  return html;
+}
+
+function scoreCode(){
+  var payload={n:state.teamName, t:total(), c:doneCount(), p:penalty().pts, a:Number(state.adjust)||0};
+  return btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+}
+function shareText(){
+  var p=penalty(), pend=pendingJuryIds();
+  var lines=['🎃 Zurrikse Speurtocht – '+state.teamName,
+    'Score: '+total()+' punten ('+doneCount()+'/'+TASKS.length+' opdrachten)'];
+  if(p.pts>0) lines.push('Strafpunten te laat: −'+p.pts);
+  if(state.finishedAt) lines.push('Terug om: '+hhmm(state.finishedAt));
+  if(pend.length) lines.push('Wacht nog op jury: '+pend.map(function(i){return '#'+i;}).join(', '));
+  lines.push('Scorecode: '+scoreCode());
+  return lines.join('\n');
+}
+function copyText(txt){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){toast('Gekopieerd ✔');},function(){fallbackCopy(txt);});
+  } else fallbackCopy(txt);
+}
+function fallbackCopy(txt){
+  var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.select();
+  try{ document.execCommand('copy'); toast('Gekopieerd ✔'); }catch(e){ toast('Kopiëren mislukt'); }
+  document.body.removeChild(ta);
+}
+
+/* ============================================================
+   RENDER – REGELS
+   ============================================================ */
+function renderRules(){
+  return '<div class="card"><h2>📜 Spelregels</h2><ol class="rules">'+
+    '<li><b>Teams en tijd.</b> 2 teams, vaste start- en eindtijd. Wie te laat terugkomt, verliest <b>'+CONFIG.PENALTY_POINTS+' punten per begonnen '+CONFIG.PENALTY_MINUTES+' minuten</b>.</li>'+
+    '<li><b>Geen bewijs = geen punten.</b> Alles moet vastgelegd zijn op foto of video, in de camerarol van je eigen telefoon. Alle teamleden staan erop, tenzij de opdracht anders zegt.</li>'+
+    '<li><b>Eén huis, één persoon, één opdracht.</b> Dezelfde persoon of hetzelfde huis mag niet voor twee opdrachten gebruikt worden, ook geen familieleden van dezelfde persoon. De tuinkabouter en de Brabantse vlag moeten dus bij verschillende huizen staan. Kies slim waar je je “biertje thuis” regelt.</li>'+
+    '<li><b>Geen eigen familie.</b> Neven, nichten, ooms en tantes tellen niet als “inwoner” bij de sociale opdrachten.</li>'+
+    '<li><b>Salmiak-regel.</b> Shotjes tellen niet mee voor regel 3, maar iedereen krijgt maximaal 1 shotje. Teamgenoten tellen niet mee. Uitdelen is vrijwillig en alleen aan 18+.</li>'+
+    '<li><b>Wedstrijdopdrachten</b> (🏁) worden aan het einde door de jury beoordeeld. De winnaar krijgt de volle punten, de ander een troostpunt(en), mits de opdracht geldig is voltooid.</li>'+
+    '<li><b>Veiligheid en fatsoen.</b> Vraag altijd toestemming voor foto\'s, video\'s, tuinen en dieren. Ga niet ongevraagd op andermans terrein. Let op in het verkeer. Wie drinkt, blijft van de weg met een voertuig.</li>'+
+    '<li><b>De spelleider beslist.</b> Bij gelijkstand geeft de beste video van opdracht #18 de doorslag. Is die ook gelijk, dan beslist de spelleider.</li>'+
+    '</ol></div>'+
+    '<div class="card"><h3>🧮 Puntentelling</h3><ul class="plain">'+
+      '<li>Alle behaalde punten bij elkaar optellen, min eventuele strafpunten.</li>'+
+      '<li>Tractor: +2 bonus als je erop zit.</li>'+
+      '<li>Salmari: 1 punt per shotje, max. 10.</li>'+
+      '<li>Het team met de meeste punten wint de prijs. 🏆</li></ul></div>'+
+    '<div class="card"><h3>💡 Hoe werkt deze app?</h3><ul class="plain">'+
+      '<li>Vink een opdracht af zodra je het bewijs hebt gemaakt.</li>'+
+      '<li>Noteer bij elke opdracht <b>wie of welk huis</b> je gebruikte. De app waarschuwt als je iets dubbel gebruikt.</li>'+
+      '<li>Je score wordt op deze telefoon bewaard, ook als je de pagina sluit.</li>'+
+      '<li>Aan het eind deel je je score met de spelleider.</li></ul></div>';
+}
+
+/* ============================================================
+   RENDER – SPELLEIDER
+   ============================================================ */
+function renderLeader(){
+  if(!unlocked){
+    return '<div class="card"><h2>🔐 Spelleider</h2><p class="muted">Voer de pincode in om de spelleidersopties te openen.</p>'+
+      '<input class="in" id="pin" type="password" inputmode="numeric" autocomplete="off" placeholder="Pincode">'+
+      '<div class="btns"><button type="button" class="btn primary" data-act="unlock">Ontgrendel</button></div></div>';
+  }
+  var comps=TASKS.filter(function(t){return t.type==='comp';});
+  var html='<div class="card"><h2>🎩 Spelleider</h2><p class="small muted">Instellingen gelden voor deze telefoon ('+esc(state.teamName)+').</p></div>';
+
+  html+='<div class="card"><h3>⏱️ Eindtijd</h3>'+
+    '<input class="in" id="endInput" type="datetime-local" value="'+esc(state.endTime)+'">'+
+    '<div class="btns two"><button type="button" class="btn primary" data-act="saveEnd">Opslaan</button>'+
+    '<button type="button" class="btn" data-act="clearEnd">Wissen</button></div>'+
+    '<p class="small muted">De standaard eindtijd staat in het bestand (EINDTIJD). Hier kun je hem voor deze telefoon aanpassen.</p></div>';
+
+  html+='<div class="card"><h3>🏁 Jury-uitslag wedstrijdopdrachten</h3>'+
+    comps.map(function(task){
+      var t=getT(task.id);
+      return '<label class="lab">#'+task.id+' '+esc(task.text)+(t.done?'':' <span class="muted">(niet gedaan)</span>')+'</label>'+
+        '<select class="in" data-act="jury" data-id="'+task.id+'">'+
+          '<option value="pending"'+(t.jury==='pending'?' selected':'')+'>⏳ Nog niet beoordeeld</option>'+
+          '<option value="win"'+(t.jury==='win'?' selected':'')+'>🏆 Winnaar (+'+task.win+')</option>'+
+          '<option value="lose"'+(t.jury==='lose'?' selected':'')+'>🥈 Tweede (+'+task.lose+')</option>'+
+        '</select>';
+    }).join('')+'</div>';
+
+  html+='<div class="card"><h3>✍️ Correctie</h3>'+
+    '<p class="small muted">Handmatig punten erbij of eraf, bijvoorbeeld bij een betwiste opdracht of dubbel gebruikt huis.</p>'+
+    '<label class="lab" for="adjInput">Aantal punten (negatief = aftrek)</label>'+
+    '<input class="in" id="adjInput" type="number" inputmode="numeric" step="1" value="'+(Number(state.adjust)||0)+'">'+
+    '<label class="lab" for="adjNote">Reden</label>'+
+    '<input class="in" id="adjNote" type="text" maxlength="80" value="'+esc(state.adjustNote)+'" placeholder="Bijv. #12 en #22 zelfde persoon">'+
+    '<div class="btns"><button type="button" class="btn primary" data-act="saveAdj">Correctie opslaan</button></div></div>';
+
+  html+='<div class="card"><h3>🏁 Terugkomst</h3>'+
+    (state.finishedAt?'<p>Teruggekomen om <b>'+hhmm(state.finishedAt)+'</b>.</p><button type="button" class="btn block" data-act="unfinish">Terugkomst wissen</button>':
+    '<p class="muted small">Dit team is nog niet teruggekomen.</p><button type="button" class="btn green block" data-act="finish">Markeer als teruggekomen (nu)</button>')+
+    '</div>';
+
+  html+='<div class="card"><h3>📊 Eindstand vergelijken</h3>'+
+    '<p class="small muted">Plak het WhatsApp-bericht (of de scorecode) van beide teams.</p>'+
+    '<label class="lab" for="cmp1">Team A</label><textarea class="in" id="cmp1" placeholder="Plak hier…"></textarea>'+
+    '<label class="lab" for="cmp2">Team B</label><textarea class="in" id="cmp2" placeholder="Plak hier…"></textarea>'+
+    '<div class="btns"><button type="button" class="btn primary" data-act="compare">Vergelijk</button></div>'+
+    '<div id="cmpOut"></div></div>';
+
+  html+='<div class="card"><h3>⚙️ Overig</h3><div class="btns">'+
+    '<button type="button" class="btn" data-act="lock">🔒 Vergrendel spelleidersmodus</button>'+
+    '<button type="button" class="btn" data-act="changeTeam">Team wijzigen</button>'+
+    '<button type="button" class="btn danger" data-act="reset">Alles wissen en opnieuw beginnen</button></div></div>';
+  return html;
+}
+
+function decodeScore(txt){
+  var m=String(txt||'').match(/Scorecode:\s*([A-Za-z0-9+\/=]+)/);
+  var code=m?m[1]:String(txt||'').trim();
+  try{ var o=JSON.parse(decodeURIComponent(escape(atob(code)))); if(typeof o.t==='number') return o; }catch(e){}
+  return null;
+}
+function doCompare(){
+  var a=decodeScore($('#cmp1').value), b=decodeScore($('#cmp2').value), out=$('#cmpOut');
+  if(!a||!b){ out.innerHTML='<p class="neg small"><b>Kon een van de scorecodes niet lezen.</b> Plak het volledige bericht of alleen de code.</p>'; return; }
+  var arr=[a,b].sort(function(x,y){return y.t-x.t;});
+  var html='';
+  if(arr[0].t===arr[1].t){
+    html+='<div class="rank first">🤝 Gelijkstand: '+esc(arr[0].n)+' en '+esc(arr[1].n)+' ('+arr[0].t+' pt)</div>'+
+      '<p class="small muted">Beslissing: beste reclamespot (#18). Is die ook gelijk, dan beslist de spelleider.</p>';
+  } else {
+    arr.forEach(function(x,i){
+      html+='<div class="rank'+(i===0?' first':'')+'"><span>'+(i===0?'🏆':'🥈')+'</span><span>'+esc(x.n)+'<br><span class="small muted">'+x.c+' opdrachten'+(x.p?' · −'+x.p+' te laat':'')+'</span></span><span class="p">'+x.t+'</span></div>';
+    });
+    html+='<p class="small muted">Verschil: '+(arr[0].t-arr[1].t)+' punt(en).</p>';
+  }
+  out.innerHTML=html;
+}
+
+/* ============================================================
+   RENDER – SETUP
+   ============================================================ */
+function renderSetup(){
+  return '<div class="card setup"><h1>🎃 Zurrikse Speurtocht</h1>'+
+    '<p class="muted">Soerendonk · neven- en nichtenweekend</p>'+
+    '<p><b>Kies jullie team</b></p>'+
+    '<div class="team-pick"><button type="button" data-act="pick" data-team="1">Team 1</button><button type="button" data-act="pick" data-team="2">Team 2</button></div>'+
+    '<label class="lab" for="setupName" style="text-align:left">Teamnaam (optioneel)</label>'+
+    '<input class="in" id="setupName" maxlength="30" placeholder="Bijv. De Pompoenen" autocomplete="off">'+
+    '<div class="btns"><button type="button" class="btn primary" data-act="start">Start de speurtocht</button></div></div>';
+}
+
+/* ============================================================
+   RENDER – HOOFD
+   ============================================================ */
+function render(){
+  var app=$('#app'), nav=$('#nav');
+  if(!state.teamId){
+    $('#hdr').hidden=true; nav.hidden=true;
+    app.innerHTML=renderSetup(); return;
+  }
+  nav.hidden=false;
+  if(!$('#hScore')) renderHeader(); else updateHeader();
+  var body='';
+  switch(state.tab){
+    case 'score': body=renderScore(); break;
+    case 'rules': body=renderRules(); break;
+    case 'leader': body=renderLeader(); break;
+    default: body=renderTasks();
+  }
+  app.innerHTML=body;
+  $$('#nav button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-tab')===state.tab); });
+  updateWarnings();
+}
+
+function updateWarnings(){
+  var map={};
+  TASKS.forEach(function(task){
+    if(task.type==='counter') return;
+    var t=getT(task.id); if(!t.done) return;
+    var k=norm(t.who); if(!k) return;
+    (map[k]=map[k]||[]).push(task.id);
+  });
+  $$('[data-warn]').forEach(function(el){
+    var id=Number(el.getAttribute('data-warn')), t=getT(id), k=norm(t.who), ids=k&&map[k]?map[k]:[];
+    var others=ids.filter(function(x){return x!==id;});
+    if(others.length){
+      el.hidden=false;
+      el.textContent='⚠️ Zelfde persoon/huis als opdracht '+others.map(function(x){return '#'+x;}).join(', ')+'. Dat mag niet (regel 3).';
+    } else { el.hidden=true; el.textContent=''; }
+  });
+}
+
+/* ============================================================
+   EVENTS
+   ============================================================ */
+document.addEventListener('click', function(e){
+  var el=e.target.closest('[data-act]'); if(!el) return;
+  var act=el.getAttribute('data-act'), id=Number(el.getAttribute('data-id'));
+  switch(act){
+    case 'tab':
+      state.tab=el.getAttribute('data-tab'); save(); render(); window.scrollTo(0,0); break;
+    case 'filter':
+      state.filter=el.getAttribute('data-f'); save(); render(); break;
+    case 'inc': case 'dec': {
+      var task=findTask(id), t=getT(id);
+      if(act==='inc'){
+        if(t.count>=task.max){ toast('Maximum van '+task.max+' shotjes bereikt'); break; }
+        t.count++;
+      } else if(t.count>0){ t.count--; }
+      save(); render(); break;
+    }
+    case 'pick':
+      setupTeam=Number(el.getAttribute('data-team'));
+      $$('.team-pick button').forEach(function(b){ b.classList.toggle('sel', Number(b.getAttribute('data-team'))===setupTeam); });
+      break;
+    case 'start': {
+      if(!setupTeam){ toast('Kies eerst Team 1 of Team 2'); break; }
+      var nm=($('#setupName').value||'').trim();
+      state.teamId=setupTeam; state.teamName=nm||('Team '+setupTeam); state.tab='tasks';
+      save(); render(); break;
+    }
+    case 'rename': {
+      var n=prompt('Nieuwe teamnaam:', state.teamName);
+      if(n!==null && n.trim()){ state.teamName=n.trim().slice(0,30); save(); renderHeader(); render(); }
+      break;
+    }
+    case 'finish':
+      if(confirm('Weet je zeker dat jullie terug zijn? Daarna staat de tijd vast.')){
+        state.finishedAt=Date.now(); save(); render(); toast('Terugkomst geregistreerd ✔');
+      }
+      break;
+    case 'unfinish':
+      state.finishedAt=null; save(); render(); toast('Terugkomst gewist'); break;
+    case 'wa':
+      window.open('https://wa.me/?text='+encodeURIComponent(shareText()), '_blank'); break;
+    case 'copy':
+      copyText(shareText()); break;
+    case 'unlock': {
+      var v=($('#pin').value||'').trim();
+      if(v===CONFIG.PIN){ unlocked=true; render(); toast('Spelleidersmodus ontgrendeld'); }
+      else { toast('Onjuiste pincode'); }
+      break;
+    }
+    case 'lock': unlocked=false; render(); break;
+    case 'saveEnd': {
+      var val=$('#endInput').value;
+      if(!val){ toast('Kies eerst een datum en tijd'); break; }
+      state.endTime=val; save(); renderHeader(); toast('Eindtijd opgeslagen ✔'); break;
+    }
+    case 'clearEnd':
+      state.endTime=''; save(); render(); toast('Eindtijd gewist'); break;
+    case 'saveAdj': {
+      var a=parseInt($('#adjInput').value,10);
+      state.adjust=isNaN(a)?0:Math.max(-100,Math.min(100,a));
+      state.adjustNote=($('#adjNote').value||'').trim().slice(0,80);
+      save(); render(); toast('Correctie opgeslagen ✔'); break;
+    }
+    case 'compare': doCompare(); break;
+    case 'changeTeam':
+      if(confirm('Teamkeuze wijzigen? Je opdrachten blijven bewaard.')){
+        state.teamId=null; setupTeam=null; save(); $('#hdr').innerHTML=''; render();
+      }
+      break;
+    case 'reset':
+      if(confirm('ALLES wissen op deze telefoon? Dit kan niet ongedaan worden gemaakt.')){
+        state={teamId:null, teamName:'', tasks:{}, endTime:CONFIG.EINDTIJD||'', finishedAt:null, adjust:0, adjustNote:'', filter:'all', tab:'tasks'};
+        unlocked=false; setupTeam=null; save(); $('#hdr').innerHTML=''; render();
+      }
+      break;
+  }
+});
+
+document.addEventListener('change', function(e){
+  var el=e.target.closest('[data-act]'); if(!el) return;
+  var act=el.getAttribute('data-act'), id=Number(el.getAttribute('data-id'));
+  if(act==='toggle'){
+    var t=getT(id); t.done=el.checked; t.ts=el.checked?Date.now():null;
+    if(!el.checked){ t.bonus=false; t.who=''; t.jury='pending'; }
+    save(); render();
+  } else if(act==='bonus'){
+    getT(id).bonus=el.checked; save(); render();
+  } else if(act==='jury'){
+    getT(id).jury=el.value; save(); toast('Jury-uitslag opgeslagen ✔'); updateHeader();
+  }
+});
+
+document.addEventListener('input', function(e){
+  var el=e.target;
+  if(el.getAttribute && el.getAttribute('data-act')==='who'){
+    getT(Number(el.getAttribute('data-id'))).who=el.value;
+    save(); updateWarnings();
+  }
+});
+
+setInterval(updateTimer, 1000);
+
+render();
+})();
+</script>
+</body>
+</html>
